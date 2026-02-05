@@ -12,9 +12,11 @@ interface Suggestion {
 export function useSuggestions() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   async function fetchSuggestions() {
     setLoading(true);
+    setError(null);
     try {
       const [mySlots, allSlots, swapHistory] = await Promise.all([
         client.get('/api/slots/mine'),
@@ -23,7 +25,9 @@ export function useSuggestions() {
       ]);
       const suggestions = generateSuggestions(mySlots.data, allSlots.data, swapHistory.data);
       setSuggestions(suggestions);
-    } catch (err) {
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || 'Failed to fetch swap suggestions';
+      setError(errorMessage);
       console.error('Failed to fetch swap suggestions:', err);
     } finally {
       setLoading(false);
@@ -34,5 +38,5 @@ export function useSuggestions() {
     fetchSuggestions();
   }, []);
 
-  return { suggestions, loading, refetch: fetchSuggestions };
+  return { suggestions, loading, error, refetch: fetchSuggestions };
 }

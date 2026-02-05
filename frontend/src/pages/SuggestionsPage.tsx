@@ -1,28 +1,51 @@
 import React from 'react';
+import { useSuggestions } from '../hooks/useSuggestions';
+import SuggestionCard from '../components/SuggestionCard';
+import client from '../api/client';
 
 interface Suggestion {
-  mySlot: { id: string; title: string; time: string };
-  theirSlot: { id: string; title: string; time: string };
+  mySlot: any;
+  theirSlot: any;
   score: number;
+  reasons: string[];
 }
 
 export default function SuggestionsPage() {
-  const suggestions: Suggestion[] = []; // Example placeholder
+  const { suggestions, loading, refetch } = useSuggestions();
 
-  function handleProposeSwap(suggestion: Suggestion) {
-    console.log(suggestion);
+  async function handleProposeSwap(suggestion: Suggestion) {
+    try {
+      await client.post('/api/swaps/propose', {
+        mySlotId: suggestion.mySlot.id,
+        theirSlotId: suggestion.theirSlot.id,
+      });
+      alert('Swap proposal sent!');
+      refetch();
+    } catch (err) {
+      console.error('Failed to propose swap:', err);
+      alert('Failed to send swap proposal');
+    }
+  }
+
+  if (loading) {
+    return <div className="text-center p-8">Loading suggestions...</div>;
   }
 
   return (
-    <div>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Swap Suggestions</h1>
       {suggestions.length > 0 ? (
-        suggestions.map((suggestion) => (
-          <div key={suggestion.mySlot.id}>
-            Suggestion: {suggestion.mySlot.title} ↔ {suggestion.theirSlot.title}
-          </div>
-        ))
+        <div className="space-y-4">
+          {suggestions.map((suggestion, index) => (
+            <SuggestionCard
+              key={`${suggestion.mySlot.id}-${suggestion.theirSlot.id}-${index}`}
+              suggestion={suggestion}
+              onPropose={handleProposeSwap}
+            />
+          ))}
+        </div>
       ) : (
-        <p>No suggestions.</p>
+        <p className="text-gray-400">No suggestions available at the moment.</p>
       )}
     </div>
   );
