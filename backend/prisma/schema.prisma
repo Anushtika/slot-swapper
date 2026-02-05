@@ -1,0 +1,64 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+
+  slots         Slot[]
+  swapsSent     SwapRequest[] @relation("SenderSwaps")
+  swapsReceived SwapRequest[] @relation("ReceiverSwaps")
+}
+
+model Slot {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  date      String
+  startTime String
+  endTime   String
+  isLocked  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  swapsAsSource SwapRequest[] @relation("SourceSlot")
+  swapsAsTarget SwapRequest[] @relation("TargetSlot")
+
+  @@index([userId, date])
+}
+
+model SwapRequest {
+  id           String     @id @default(cuid())
+  senderId     String
+  sender       User       @relation("SenderSwaps", fields: [senderId], references: [id])
+  receiverId   String
+  receiver     User       @relation("ReceiverSwaps", fields: [receiverId], references: [id])
+  sourceSlotId String
+  sourceSlot   Slot       @relation("SourceSlot", fields: [sourceSlotId], references: [id])
+  targetSlotId String
+  targetSlot   Slot       @relation("TargetSlot", fields: [targetSlotId], references: [id])
+  status       SwapStatus @default(PENDING)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([status])
+}
+
+enum SwapStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}

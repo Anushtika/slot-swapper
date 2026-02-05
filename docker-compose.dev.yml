@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  # Dev override for backend: run TypeScript directly (hot reload via ts-node watch)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - ./backend/.env
+    entrypoint: ["npx", "ts-node", "--watch", "src/main.ts"]
+    volumes:
+      - ./backend/src:/app/src:delegated
+      - ./backend/prisma:/app/prisma:delegated
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+
+  # Dev override for frontend: run Vite dev server
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: "${VITE_API_BASE_URL:-http://host.docker.internal:3000/api}"
+        VITE_WS_BASE_URL: "${VITE_WS_BASE_URL:-ws://host.docker.internal:3000/ws}"
+    env_file:
+      - ./backend/.env
+    entrypoint: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    volumes:
+      - ./frontend/src:/app/src:delegated
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
