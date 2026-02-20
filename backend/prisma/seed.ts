@@ -38,21 +38,21 @@ async function main() {
       {
         userId: alice.id,
         title: "Alice Morning",
-        date: "2026-02-02",
+        date: "2026-02-08",
         startTime: "09:00",
         endTime: "10:00"
       },
       {
         userId: alice.id,
         title: "Alice Midday",
-        date: "2026-02-02",
+        date: "2026-02-08",
         startTime: "12:00",
         endTime: "13:00"
       },
       {
         userId: alice.id,
         title: "Alice Afternoon",
-        date: "2026-02-03",
+        date: "2026-02-08",
         startTime: "15:00",
         endTime: "16:30"
       }
@@ -65,14 +65,14 @@ async function main() {
       {
         userId: bob.id,
         title: "Bob Standup",
-        date: "2026-02-02",
+        date: "2026-02-08",
         startTime: "10:30",
         endTime: "11:00"
       },
       {
         userId: bob.id,
         title: "Bob Review",
-        date: "2026-02-03",
+        date: "2026-02-08",
         startTime: "16:00",
         endTime: "17:00"
       }

@@ -9,6 +9,7 @@ export interface User {
 
 export interface AuthContextType {
   user: User | null;
+  token: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -18,14 +19,16 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
   // Check if user is already logged in on mount
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
+    const savedToken = localStorage.getItem('authToken');
     const savedUser = localStorage.getItem('user');
     
-    if (token && savedUser) {
+    if (savedToken && savedUser) {
       try {
+        setToken(savedToken);
         setUser(JSON.parse(savedUser));
       } catch (err) {
         console.error('Failed to parse saved user:', err);
@@ -36,25 +39,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    try {
-      // Call the real backend API
-      const { data } = await client.post('/auth/login', { email, password });
-      
-      // Save token and user info
-      localStorage.setItem('authToken', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      
-      setUser(data.user);
-    } catch (error: any) {
-      console.error('Login failed:', error);
-      throw error;
-    }
-  };
+  try {
+    const response = await client.post('/auth/login', { email, password });
+    const { user, token } = response.data.data; // Access nested data
+    
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    
+    setToken(token);
+    setUser(user);
+  } catch (error: any) {
+    console.error('Login failed:', error);
+    throw error;
+  }
+};
 
   const logout = () => {
     // Clear token and user
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
+    setToken(null);
     setUser(null);
     
     // Redirect to login
@@ -64,7 +68,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider 
       value={{ 
-        user, 
+        user,
+        token,
         login, 
         logout, 
         isAuthenticated: !!user 
@@ -74,5 +79,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     </AuthContext.Provider>
   );
 }
+
+export const useAuth = () => {
+  const context = React.useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
+};
 
 export default AuthContext;

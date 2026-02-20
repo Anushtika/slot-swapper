@@ -1,4 +1,4 @@
-import './index.css'; // Ensure the relative path is correct
+import './index.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
